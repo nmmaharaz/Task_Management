@@ -7,7 +7,7 @@ const Home = () => {
     const {user, loading} = useContext(AuthContext)
     if(loading) return <p>loading...</p>
     return (
-        <div>
+        <div className="min-h-screen dark:bg-black">
             {
                 user?.email ? <>
                 <TaskManage></TaskManage>

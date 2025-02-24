@@ -13,8 +13,15 @@ import auth from "../Firebase/Firebase.init";
 export const AuthContext = createContext();
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [reset, setReset] = useState(null);
   console.log(user, "this is user");
   const [loading, setLoading] = useState(true);
+
+  const [dark, setDark] = useState(false);
+  const handleDarkMode = () => {
+    setDark(!dark);
+    return document.body.classList.toggle("dark");
+  };
 
   const SignUp = (email, password) => {
     setLoading(true);
@@ -60,6 +67,11 @@ const AuthProvider = ({ children }) => {
     logout,
     userUpdateProfile,
     user,
+    reset,
+    setReset,
+    dark,
+    setDark,
+    handleDarkMode,
   };
 
   return (
