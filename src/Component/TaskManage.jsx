@@ -6,21 +6,24 @@ import Navbar from "./Navbar";
 import { AuthContext } from "../AuthProvider/AuthProvider";
 
 const TaskManage = () => {
-  const {user} = useContext(AuthContext);
+  const {user, loading} = useContext(AuthContext);
   const time = new Date();
   const [category, setCategory] = useState("");
   const [Errormsg, setError] = useState(false);
   const [Errordes, setErrordes] = useState(false);
   const [tasks, setTasks] = useState([]);
-
-  const { data: Tasks, refetch: reset } = useQuery({
-    queryKey: ["Task"],
+  const { data: Tasks, refetch: reset, isLoading } = useQuery({
+    queryKey: ["Task", user?.email],
+    enabled:!!user?.email,
     queryFn: async () => {
-      const { data } = await axios(`${import.meta.env.VITE_API_URL}/tasks`);
+      const { data } = await axios(`${import.meta.env.VITE_API_URL}/tasks/${user?.email}`);
       setTasks(data);
+      console.log(data, "console.log")
       return data;
     },
   });
+
+  console.log(Tasks, "console.log");
 
   const handleTaskSubmit = async (e) => {
     e.preventDefault();
@@ -49,6 +52,7 @@ const TaskManage = () => {
     }
   };
 
+  if(loading)return <div>Loading...</div>
   return (
     <div className="dark:bg-black">
       <Navbar></Navbar>
@@ -106,9 +110,9 @@ const TaskManage = () => {
         </form>
       </div>
       <TaskBoard
+      isLoading={isLoading}
         tasks={tasks}
         setTasks={setTasks}
-        Tasks={Tasks}
         reset={reset}
       ></TaskBoard>
     </div>

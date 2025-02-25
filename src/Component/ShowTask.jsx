@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
@@ -6,9 +6,8 @@ import { FaRegEdit } from "react-icons/fa";
 import { MdOutlineDelete } from "react-icons/md";
 import TimeAgo from "react-timeago";
 import axios from "axios";
-import { useQuery } from "@tanstack/react-query";
-import TaskManage from "./TaskManage";
-const socket = io("http://localhost:5000");
+import { AuthContext } from "../AuthProvider/AuthProvider";
+const socket = io("https://task-management-server-two-ecru.vercel.app");
 
 const ItemType = "TASK";
 
@@ -21,7 +20,7 @@ const Task = ({ task, reset }) => {
     try {
       await axios.delete(`${import.meta.env.VITE_API_URL}/tasks/${task._id}`);
       console.log("Task deleted successfully");
-      reset()
+      reset();
       setIsDelete(false);
     } catch (error) {
       console.log(error);
@@ -60,73 +59,74 @@ const Task = ({ task, reset }) => {
       }`}
     >
       {isEditing || isDelete ? (
-        isEditing? (
+        isEditing ? (
           <form onSubmit={handleUpdate} className="rounded-2xl ">
-          <div className=" mb-2 form-control">
-            <input
-              type="text"
-              name="title"
-              defaultValue={task?.title}
-              placeholder="Title"
-              className="input input-bordered"
-              required
-            />
-          </div>
-          <div className="form-control">
-            <textarea
-              type="text"
-              defaultValue={task?.description}
-              name="description"
-              placeholder="Description"
-              className="input min-h-9 input-bordered"
-              required
-            />
-          </div>
-          <div className="form-control mt-2">
-            <div className="flex space-x-2 justify-between items-center">
-              <button
-                type="submit"
-                className="bg-green-500 py-1 rounded-lg w-full text-white font-semibold"
-              >
-                Update
-              </button>
-              <button
-                onClick={() => setIsEditing(false)}
-                type="submit"
-                className="border border-base-300 py-1 rounded-lg text-black w-full font-semibold"
-              >
-                Cencel
-              </button>
+            <div className=" mb-2 form-control">
+              <input
+                type="text"
+                name="title"
+                defaultValue={task?.title}
+                placeholder="Title"
+                className="input input-bordered"
+                required
+              />
             </div>
-          </div>
-        </form>
-        ):(
+            <div className="form-control">
+              <textarea
+                type="text"
+                defaultValue={task?.description}
+                name="description"
+                placeholder="Description"
+                className="input min-h-9 input-bordered"
+                required
+              />
+            </div>
+            <div className="form-control mt-2">
+              <div className="flex space-x-2 justify-between items-center">
+                <button
+                  type="submit"
+                  className="bg-green-500 py-1 rounded-lg w-full text-white font-semibold"
+                >
+                  Update
+                </button>
+                <button
+                  onClick={() => setIsEditing(false)}
+                  type="submit"
+                  className="border border-base-300 py-1 rounded-lg text-black w-full font-semibold"
+                >
+                  Cencel
+                </button>
+              </div>
+            </div>
+          </form>
+        ) : (
           <form className="rounded-2xl ">
-          <div className=" mb-2 form-control">
-            <p className="font-bold text-center">Are you sure you want to delete this task?</p>
-          </div>
-        
-          <div className="form-control mt-2">
-            <div className="flex space-x-2 justify-between items-center">
-              <button
-              onClick={handleDelete}
-                type="submit"
-                className="bg-green-500 py-1 rounded-lg w-full text-white font-semibold"
-              >
-                Yes
-              </button>
-              <button
-                onClick={() => setIsDelete(false)}
-                type="submit"
-                className="border border-base-300 py-1 rounded-lg text-black w-full font-semibold"
-              >
-                No
-              </button>
+            <div className=" mb-2 form-control">
+              <p className="font-bold text-center">
+                Are you sure you want to delete this task?
+              </p>
             </div>
-          </div>
-        </form>
+
+            <div className="form-control mt-2">
+              <div className="flex space-x-2 justify-between items-center">
+                <button
+                  onClick={handleDelete}
+                  type="submit"
+                  className="bg-green-500 py-1 rounded-lg w-full text-white font-semibold"
+                >
+                  Yes
+                </button>
+                <button
+                  onClick={() => setIsDelete(false)}
+                  type="submit"
+                  className="border border-base-300 py-1 rounded-lg text-black w-full font-semibold"
+                >
+                  No
+                </button>
+              </div>
+            </div>
+          </form>
         )
-       
       ) : (
         <div>
           <p className="text-[18px] font-semibold">{task?.title}</p>
@@ -147,7 +147,7 @@ const Task = ({ task, reset }) => {
               </button>
 
               <button
-              onClick={()=>setIsDelete(true)}
+                onClick={() => setIsDelete(true)}
                 className="flex items-center bg-[#e54424] px-3 py-1 mr-3 rounded-sm hover:bg-[#c63517]"
               >
                 <MdOutlineDelete className="text-xl text-white" />
@@ -180,14 +180,12 @@ const Column = ({ title, tasks, category, moveTask, reset }) => {
   );
 };
 
-const TaskBoard = ({reset, Tasks, setTasks, tasks}) => {
-  
-  console.log("TaskBoard rerendered", tasks);
-
-  useEffect(() => {
-    socket.on("taskUpdated", setTasks);
-    return () => socket.off("taskUpdated");
-  }, [setTasks]);
+const TaskBoard = ({ reset, isLoading, setTasks, tasks }) => {
+  console.log("Tasks:", tasks.length);
+  // useEffect(() => {
+  //   socket.on("taskUpdated", setTasks);
+  //   return () => socket.off("taskUpdated");
+  // }, [setTasks]);
   const moveTask = (taskId, newCategory) => {
     setTasks((prevTasks) =>
       prevTasks.map((task) =>
@@ -195,13 +193,13 @@ const TaskBoard = ({reset, Tasks, setTasks, tasks}) => {
       )
     );
 
-    fetch(`http://localhost:5000/tasks/${taskId}`, {
+    fetch(`${import.meta.env.VITE_API_URL}/tasks/${taskId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ category: newCategory }),
     });
   };
-
+  if (isLoading) return <p>Loading...</p>;
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="lg:flex dark:bg-black gap-4 justify-around p-4">
